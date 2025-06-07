@@ -425,7 +425,7 @@ export function ThirdRow() {
               </motion.div>
               <span className="text-xs font-black casino-text-gold uppercase">
                 Logout
-              </span>
+        </span>
             </div>
           </Button>
         </motion.div>
@@ -435,7 +435,7 @@ export function ThirdRow() {
         {/* Centered Token Selection & Enter Button */}
         <div className="flex items-center gap-4">
           {/* Available Tokens - Clean Badge Style */}
-          {loading ? (
+        {loading ? (
             <div className="flex items-center gap-2">
               <motion.div
                 animate={{ rotate: 360 }}
@@ -445,20 +445,20 @@ export function ThirdRow() {
               </motion.div>
               <span className="text-sm casino-text-yellow font-bold">Loading...</span>
             </div>
-          ) : availableTokens.length === 0 ? (
+        ) : availableTokens.length === 0 ? (
             <span className="text-sm casino-text-yellow font-bold">
               {selectedTokens.length > 0 ? "All tokens selected" : "No tokens available"}
             </span>
-          ) : (
+        ) : (
             <div className="flex items-center gap-2">
               {availableTokens.slice(0, 6).map((token) => (
-                <motion.div
-                  key={token.mint}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+            <motion.div
+              key={token.mint}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
                   className="cursor-pointer"
-                  onClick={() => handleAddToken(token)}
-                >
+                onClick={() => handleAddToken(token)}
+              >
                   <div className="casino-box casino-box-gold px-3 py-2 rounded-lg border border-[#FFD700] hover:border-[#FFFF00] hover:bg-[#FFD70015] transition-all duration-200">
                     <div className="flex items-center gap-2">
                       <div className="relative w-6 h-6">
@@ -517,14 +517,14 @@ export function ThirdRow() {
                       </Button>
                       <div className="flex items-center gap-2">
                         <div className="relative w-6 h-6">
-                          <Image
-                            src={token.image}
-                            alt={token.symbol}
-                            fill
-                            className="rounded-full object-cover"
-                            onError={(e) => ((e.target as HTMLImageElement).src = '/solana-logo.png')}
-                          />
-                        </div>
+                    <Image
+                      src={token.image}
+                      alt={token.symbol}
+                      fill
+                      className="rounded-full object-cover"
+                      onError={(e) => ((e.target as HTMLImageElement).src = '/solana-logo.png')}
+                    />
+                  </div>
                         <div className="flex flex-col">
                           <span className="text-xs font-black text-white leading-none" 
                                 style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}>
@@ -543,7 +543,7 @@ export function ThirdRow() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </div>
+                </div>
               <div className="w-px h-8 bg-[#FFD700]/30"></div>
             </>
           )}
@@ -576,7 +576,7 @@ export function ThirdRow() {
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     >
                       <Zap className="h-4 w-4" fill="currentColor" />
-                    </motion.div>
+            </motion.div>
                     <span>Processing...</span>
                   </>
                 ) : (
@@ -589,7 +589,7 @@ export function ThirdRow() {
               </div>
             </Button>
           </motion.div>
-        </div>
+      </div>
 
       {/* Amount Editing - Only show when editing a specific token */}
       {editingToken && (
@@ -632,7 +632,7 @@ export function ThirdRow() {
 
 
 
-    </div>
+          </div>
     </div>
   );
 }

@@ -5,12 +5,9 @@ import PastDraws from "@/components/PastDraws";
 import { CurrentDeposits } from "@/components/CurrentDeposits";
 import { ChatSection } from "@/components/ChatSection";
 import { FloatingTokens } from "@/components/FloatingTokens";
-import { UserStats } from "@/components/UserStats";
 import { HeaderRow } from "@/components/HeaderRow";
 import { SunburstBackground } from "@/components/SunburstBackground";
-import { AudioControls } from "@/components/AudioControls";
-import { pastDraws, chatMessages, totalPotAmount } from "@/lib/mock-data";
-import { Card, CardContent } from "@/components/ui/card";
+import { pastDraws, chatMessages } from "@/lib/mock-data";
 import { ThirdRow } from "@/components/ThirdRow";
 import { useState } from "react";
 
