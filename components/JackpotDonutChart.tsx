@@ -49,7 +49,7 @@ interface JackpotDonutChartProps {
   simulateData?: boolean;
   onRoundEnd?: (winner: string, amount: number) => void;
   onNewRound?: () => void;
-  onDepositsChange?: (deposits: Deposit[]) => void;
+  onDepositsChange?: (deposits: Deposit[] | ((prevDeposits: Deposit[]) => Deposit[])) => void;
 }
 
 interface Deposit {
