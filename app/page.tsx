@@ -22,6 +22,7 @@ interface Deposit {
   timestamp: Date;
 }
 
+
 export default function Home() {
   // State for current round deposits - shared between donut chart and deposits table
   const [currentRoundDeposits, setCurrentRoundDeposits] = useState<Deposit[]>([]);
@@ -89,7 +90,7 @@ export default function Home() {
       </div>
 
       {/* Audio Controls - Fixed position in bottom right */}
-      <AudioControls />
+      {/* <AudioControls /> */}
     </main>
   );
 }

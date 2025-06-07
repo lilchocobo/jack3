@@ -12,6 +12,7 @@ export function Header() {
         ease: "easeOut",
         delay: 0.2
       }}
+      whileHover={{ rotate: [0, 10, -10, 10, -10, 0], transition: { duration: 0.5 } }}
       className="flex justify-center items-end relative"
     >
       <Image

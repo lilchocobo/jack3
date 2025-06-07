@@ -27,8 +27,8 @@ import {
   useWallets,
   usePrivy,
 } from '@privy-io/react-auth';
-import { WalletConnect } from './WalletConnect';
 import { useAudioContext } from './AudioProvider';
+import { jackpotAddr } from '@/lib/constants';
 
 // Add TypeScript declaration for window.solana
 declare global {
@@ -246,7 +246,6 @@ export default function JackpotDonutChart({
   const { wallets } = useWallets();
   const connectedWallet = wallets[0];
   const walletAddress = user?.wallet?.address;
-  const jackpotAddr = new PublicKey(process.env.NEXT_PUBLIC_JACKPOT_ADDRESS!);
   
   // Audio context
   const { playSound } = useAudioContext();
@@ -432,20 +431,20 @@ export default function JackpotDonutChart({
         tx.add(
           SystemProgram.transfer({
             fromPubkey: publicKey,
-            toPubkey: jackpotAddr,
+            toPubkey: new PublicKey(jackpotAddr),
             lamports: Math.round(amt * LAMPORTS_PER_SOL),
           }),
         );
       } else {
         const mint = new PublicKey(tok.mint);
         const fromAta = getAssociatedTokenAddressSync(mint, publicKey);
-        const toAta = getAssociatedTokenAddressSync(mint, jackpotAddr, true);
+        const toAta = getAssociatedTokenAddressSync(mint, new PublicKey(jackpotAddr), true);
         if (!(await connection.getAccountInfo(toAta))) {
           tx.add(
             createAssociatedTokenAccountInstruction(
               publicKey,
               toAta,
-              jackpotAddr,
+              new PublicKey(jackpotAddr),
               mint,
             ),
           );

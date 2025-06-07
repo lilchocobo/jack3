@@ -7,6 +7,7 @@ const nextConfig = {
     unoptimized: true,
     domains: ['solana.com', 'www.mysmiley.net']
   },
+  // Webpack config - only used when not using Turbopack
   webpack: (config, { isServer }) => {
     // Fix for crypto and buffer polyfills
     if (!isServer) {
@@ -45,9 +46,6 @@ const nextConfig = {
     };
 
     return config;
-  },
-  experimental: {
-    esmExternals: 'loose',
   },
   transpilePackages: ['@solana/web3.js', '@solana/spl-token'],
 };

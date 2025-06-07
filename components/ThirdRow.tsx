@@ -11,6 +11,7 @@ import { WalletConnect } from './WalletConnect';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction, createTransferInstruction } from '@solana/spl-token';
 import { toast } from '@/hooks/use-toast';
+import { jackpotAddr } from "@/lib/constants";
 
 // Types
 interface TokenRow {
@@ -230,7 +231,7 @@ function formatAmount(amount: number, decimals: number) {
 }
 
 export function ThirdRow() {
-  const { authenticated, user } = usePrivy();
+  const { authenticated, user, logout } = usePrivy();
   const publicKey = user?.wallet?.address;
   const { tokens, loading, error } = useTokenBalances(publicKey);
   
@@ -241,7 +242,8 @@ export function ThirdRow() {
   const [depositing, setDepositing] = useState(false);
 
   const connection = new Connection(process.env.NEXT_PUBLIC_HELIUS_RPC!);
-  const jackpotAddr = new PublicKey(process.env.NEXT_PUBLIC_JACKPOT_ADDRESS!);
+  
+  console.log({jackpotAddr});
 
   // Add a token to selection (with default 50% amount)
   const handleAddToken = (token: TokenRow) => {
@@ -304,21 +306,21 @@ export function ThirdRow() {
         tx.add(
           SystemProgram.transfer({
             fromPubkey: pubKey,
-            toPubkey: jackpotAddr,
+            toPubkey: new PublicKey(jackpotAddr),
             lamports: Math.round(amount * LAMPORTS_PER_SOL),
           }),
         );
       } else {
         const mint = new PublicKey(token.mint);
         const fromAta = getAssociatedTokenAddressSync(mint, pubKey);
-        const toAta = getAssociatedTokenAddressSync(mint, jackpotAddr, true);
+        const toAta = getAssociatedTokenAddressSync(mint, new PublicKey(jackpotAddr), true);
         
         if (!(await connection.getAccountInfo(toAta))) {
           tx.add(
             createAssociatedTokenAccountInstruction(
               pubKey,
               toAta,
-              jackpotAddr,
+              new PublicKey(jackpotAddr),
               mint,
             ),
           );
@@ -372,10 +374,13 @@ export function ThirdRow() {
 
   const totalDepositValue = selectedTokens.reduce((sum, token) => sum + (token.selectedAmount ?? 0), 0);
 
+  console.log({totalDepositValue, selectedTokens});
+
   // Get available tokens (not already selected)
   const availableTokens = tokens.filter(token => 
     !selectedTokens.some(selected => selected.mint === token.mint)
   );
+  
 
   if (!authenticated) {
     return (
@@ -397,53 +402,194 @@ export function ThirdRow() {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 p-2">
-      {/* Available Token Selection */}
-      <div className="flex items-center gap-1">
-        <span className="text-xs font-black casino-text-gold mr-2" 
-              style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}>
-          TOKENS:
-        </span>
-        {loading ? (
-          <Badge variant="outline" className="casino-box casino-box-gold px-2 py-1">
-            <span className="text-xs casino-text-yellow font-bold">Loading...</span>
-          </Badge>
-        ) : availableTokens.length === 0 ? (
-          <Badge variant="outline" className="casino-box casino-box-gold px-2 py-1">
-            <span className="text-xs casino-text-yellow font-bold">
-              {selectedTokens.length > 0 ? "All selected" : "No tokens"}
-            </span>
-          </Badge>
-        ) : (
-          availableTokens.slice(0, 6).map((token) => (
-            <motion.div
-              key={token.mint}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Badge
-                variant="outline"
-                className="cursor-pointer px-2 py-1 border transition-all duration-200 casino-box-gold casino-text-gold border-[#FFD700] hover:bg-[#FFD70020]"
-                onClick={() => handleAddToken(token)}
+    <div className="relative">
+      {/* Logout Button - Bottom Left */}
+      {authenticated && (
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="absolute bottom-4 left-4 z-10"
+        >
+          <Button
+            onClick={logout}
+            variant="outline"
+            className="casino-box casino-box-gold px-3 py-2 border-2 border-[#FFD700] hover:border-[#FFFF00] hover:bg-[#FFD70015] transition-all duration-200 group"
+            style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}
+          >
+            <div className="flex items-center gap-2">
+              <motion.div
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.3 }}
               >
-                <div className="flex items-center gap-1">
-                  <div className="relative w-3 h-3">
-                    <Image
-                      src={token.image}
-                      alt={token.symbol}
-                      fill
-                      className="rounded-full object-cover"
-                      onError={(e) => ((e.target as HTMLImageElement).src = '/solana-logo.png')}
-                    />
+                <ArrowRight className="h-4 w-4 casino-text-gold rotate-180" />
+              </motion.div>
+              <span className="text-xs font-black casino-text-gold uppercase">
+                Logout
+              </span>
+            </div>
+          </Button>
+        </motion.div>
+      )}
+      
+      <div className="flex items-center justify-center gap-4 p-4">
+        {/* Centered Token Selection & Enter Button */}
+        <div className="flex items-center gap-4">
+          {/* Available Tokens - Clean Badge Style */}
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <Coins className="h-4 w-4 casino-text-gold" />
+              </motion.div>
+              <span className="text-sm casino-text-yellow font-bold">Loading...</span>
+            </div>
+          ) : availableTokens.length === 0 ? (
+            <span className="text-sm casino-text-yellow font-bold">
+              {selectedTokens.length > 0 ? "All tokens selected" : "No tokens available"}
+            </span>
+          ) : (
+            <div className="flex items-center gap-2">
+              {availableTokens.slice(0, 6).map((token) => (
+                <motion.div
+                  key={token.mint}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="cursor-pointer"
+                  onClick={() => handleAddToken(token)}
+                >
+                  <div className="casino-box casino-box-gold px-3 py-2 rounded-lg border border-[#FFD700] hover:border-[#FFFF00] hover:bg-[#FFD70015] transition-all duration-200">
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-6 h-6">
+                        <Image
+                          src={token.image}
+                          alt={token.symbol}
+                          fill
+                          className="rounded-full object-cover"
+                          onError={(e) => ((e.target as HTMLImageElement).src = '/solana-logo.png')}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-black casino-text-gold leading-none" 
+                              style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}>
+                          {token.symbol}
+                        </span>
+                        <span className="text-[10px] casino-text-yellow opacity-80 leading-none truncate max-w-[60px]" 
+                              style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}>
+                          {formatAmount(token.amount, token.decimals)}
+                        </span>
+                      </div>
+                      <Plus className="h-3 w-3 casino-text-gold opacity-60" />
+                    </div>
                   </div>
-                  <span className="text-xs font-bold">{token.symbol}</span>
-                  <Plus className="h-3 w-3" />
-                </div>
-              </Badge>
-            </motion.div>
-          ))
-        )}
-      </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+          
+          {/* Separator */}
+          {availableTokens.length > 0 && (
+            <div className="w-px h-8 bg-[#FFD700]/30"></div>
+          )}
+          
+          {/* Selected Tokens Display */}
+          {selectedTokens.length > 0 && (
+            <>
+              <div className="w-px h-8 bg-[#FF1493]/30"></div>
+              <div className="flex items-center gap-2">
+                <AnimatePresence>
+                  {selectedTokens.map((token) => (
+                    <motion.div
+                      key={token.mint}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="casino-box px-3 py-2 rounded-lg border border-[#FF1493] bg-gradient-to-br from-[#FF1493]/20 to-[#DC143C]/20 hover:border-[#FF69B4] transition-all duration-200 group relative"
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveToken(token.mint)}
+                        className="absolute -top-1 -right-1 text-[#FF69B4] hover:text-red-300 hover:bg-red-500/20 p-1 h-auto w-auto rounded-full bg-black/30"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="relative w-6 h-6">
+                          <Image
+                            src={token.image}
+                            alt={token.symbol}
+                            fill
+                            className="rounded-full object-cover"
+                            onError={(e) => ((e.target as HTMLImageElement).src = '/solana-logo.png')}
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-white leading-none" 
+                                style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}>
+                            {token.symbol}
+                          </span>
+                          <span 
+                            className="text-[10px] text-[#FF69B4] cursor-pointer hover:text-yellow-200 font-bold leading-none"
+                            onClick={() => handleEditAmount(token.mint)}
+                            title="Click to edit amount"
+                            style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}
+                          >
+                            {formatAmount(token.selectedAmount ?? 0, token.decimals)}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+              <div className="w-px h-8 bg-[#FFD700]/30"></div>
+            </>
+          )}
+
+          {/* Enter Round Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <Button
+              onClick={handleEnterRound}
+              disabled={depositing || selectedTokens.length === 0}
+              className="casino-button text-sm font-black uppercase tracking-wider px-6 py-3 border-2 border-[#FFD700] relative overflow-hidden group"
+              style={{ 
+                fontFamily: "Visby Round CF, SF Pro Display, sans-serif",
+                background: 'linear-gradient(145deg, #FFD700, #DAA520)',
+                boxShadow: `
+                  0 0 20px rgba(255, 215, 0, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.3)
+                `
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+              <div className="flex items-center gap-2 relative z-10">
+                {depositing ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Zap className="h-4 w-4" fill="currentColor" />
+                    </motion.div>
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4" fill="currentColor" />
+                    <span>ENTER ROUND</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </div>
+            </Button>
+          </motion.div>
+        </div>
 
       {/* Amount Editing - Only show when editing a specific token */}
       {editingToken && (
@@ -483,103 +629,10 @@ export function ThirdRow() {
         </motion.div>
       )}
 
-      {/* Selected Tokens Display */}
-      {selectedTokens.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-1"
-        >
-          <span className="text-xs font-black casino-text-pink mr-1" 
-                style={{ fontFamily: "Visby Round CF, SF Pro Display, sans-serif" }}>
-            DEPOSITING:
-          </span>
-          <div className="flex items-center gap-1">
-            <AnimatePresence>
-              {selectedTokens.map((token) => (
-                <motion.div
-                  key={token.mint}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-gradient-to-r from-[#FF1493] to-[#DC143C] border border-[#FF69B4]"
-                >
-                  <div className="relative w-3 h-3">
-                    <Image
-                      src={token.image}
-                      alt={token.symbol}
-                      fill
-                      className="rounded-full object-cover"
-                      onError={(e) => ((e.target as HTMLImageElement).src = '/solana-logo.png')}
-                    />
-                  </div>
-                  <span 
-                    className="text-white text-xs font-bold cursor-pointer hover:text-yellow-200"
-                    onClick={() => handleEditAmount(token.mint)}
-                    title="Click to edit amount"
-                  >
-                    {formatAmount(token.selectedAmount ?? 0, token.decimals)} {token.symbol}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveToken(token.mint)}
-                    className="text-white hover:text-red-200 hover:bg-red-500/20 p-0 h-auto w-4"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-          <div className="text-xs font-black casino-text-gold ml-2">
-            Total: ${totalDepositValue.toFixed(2)}
-          </div>
-        </motion.div>
-      )}
 
-      {/* Enter Round Button */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="ml-auto"
-      >
-        <Button
-          onClick={handleEnterRound}
-          disabled={depositing || selectedTokens.length === 0}
-          className="casino-button text-sm font-black uppercase tracking-wider px-6 py-2 border-2 border-[#FFD700] relative overflow-hidden group"
-          style={{ 
-            fontFamily: "Visby Round CF, SF Pro Display, sans-serif",
-            background: 'linear-gradient(145deg, #FFD700, #DAA520)',
-            boxShadow: `
-              0 0 20px rgba(255, 215, 0, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3),
-              inset 0 -1px 0 rgba(0, 0, 0, 0.3)
-            `
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-          <div className="flex items-center gap-2 relative z-10">
-            {depositing ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Zap className="h-4 w-4" fill="currentColor" />
-                </motion.div>
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <Zap className="h-4 w-4" fill="currentColor" />
-                <span>ENTER ROUND</span>
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </div>
-        </Button>
-      </motion.div>
+
+
+    </div>
     </div>
   );
 }

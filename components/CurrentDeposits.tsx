@@ -25,7 +25,7 @@ export function CurrentDeposits({ deposits }: CurrentDepositsProps) {
   const reversedDeposits = [...deposits].reverse();
 
   return (
-    <Card className="casino-box casino-box-gold overflow-hidden p-0 h-full flex flex-col relative max-h-[500px]">
+    <Card className="casino-box casino-box-gold overflow-scroll p-0 h-full flex flex-col relative max-h-[500px]">
       {/* Corner stars */}
       <div className="absolute top-2 left-2 z-10">
         <Star className="h-4 w-4 casino-star" fill="currentColor" />
@@ -81,7 +81,7 @@ export function CurrentDeposits({ deposits }: CurrentDepositsProps) {
         </div>
         
         {/* Deposits List - Fixed height with scroll */}
-        <div className="flex-1 overflow-hidden min-w-0 min-h-0">
+        <div className="flex-1 overflow-hidden min-w-0 min-h-0 max-h-[200px]">
           <ScrollArea className="h-full custom-scrollbar">
             <div className="space-y-1 pr-2">
               <AnimatePresence mode="popLayout">
